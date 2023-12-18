@@ -14,7 +14,7 @@ parser = argparse.ArgumentParser(description='MKZEROx24 game operator.', formatt
 parser.add_argument('--config', type=str,
                     help='Config file for websocket configuration.\nDefault: config.cfg', default="config.cfg")
 parser.add_argument('--shaders', type=str,
-                    help='Shader list file to use.\nDefault: shaders.csv', default="shaders.csv")
+                    help='Shader list file to use.\nDefault: shaders.json', default="shaders.json")
 parser.add_argument('-v', '--verbosity', type=int,
                     help='Verbosity of the script.\n'
                          '0: Silent.\n'
@@ -60,8 +60,8 @@ settings = {
     "reconnect": False,
     "norolling": False,
     "hardreset": False,
-    "shader-random": 0.1,
-    "shader-max-range": 0,
+    "shader-random": 0.0,
+    "shader-max-range": 0.0,
     "penalty_img": [],
     "runnin_id": 0
 }
@@ -381,6 +381,7 @@ def update_shaders():
                 shader = get_shader(p, state["wins"][p], settings["shader-random"], settings["shader-max-range"])
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["wins"] = shader
+
             if players[p]["score"] >= 1:
                 shader = get_shader(p, players[p]["score"], settings["shader-random"]*2, settings["shader-max-range"]*2)
                 players[p]["shaders"].append(shader["group"])
@@ -440,19 +441,24 @@ def set_shaders(game_sources):
         obs.set_scene_item_enabled(obs_sources["main"], obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id, False)
         time.sleep(0.5)
     v_print(2, "Setting following effects for players:")
+    to_print = {}
+    splits = obs_sources["game_screen"].split("#")
     for source in game_sources.keys():
-        to_print = source
+        source_i = int(source.split(splits[0])[1].split(splits[1])[0])
+        to_print[source_i] = ""
         for k in game_sources[source].keys():
             if game_sources[source][k]:
                 if k != "penalties":
                     create_shader(source, game_sources[source][k])
-                    to_print += f' {k.ljust(10)} {game_sources[source][k]["name"].ljust(25)}'
+                    to_print[source_i] += f' {k.ljust(10)}: {game_sources[source][k]["name"].ljust(25)}'
                 else:
-                    to_print += f' {k.ljust(10)} '
+                    to_print[source_i] += f' {k.ljust(10)}: '
                     for p in game_sources[source][k]:
-                        to_print += f' {p[0]["file"].ljust(30)}'
+                        to_print[source_i] += f' {p[0]["file"].ljust(30)}'
                         add_penalty_dvd(p[0], p[1], p[2])
-        v_print(2, to_print)
+    for i in range(len(game_sources.keys())):
+        if to_print[i+1] != "":
+            v_print(2, str(i+1) + ": " + to_print[i+1])
 
 
 def create_shader(source, shader):
@@ -466,25 +472,59 @@ def create_shader(source, shader):
 
 def get_shader(player, score, fir, mid):
     global players
-    intensity = (score/settings["rounds"]) * 25
-    intensity += -fir * intensity + fir * random.random() * intensity * 2
-    intensity = max(min(intensity, 25), 0)
+    midf = mid/settings["rounds"]
+    firf = fir/settings["rounds"]
+    intensity = score/settings["rounds"]
+    intensity += firf * random.random() - firf/2
+    intensity = max(min(intensity, 1), 0)
     choises = []
     for shader in shaders:
         if shader["group"] in players[player]["shaders"]:
             continue
-        if intensity+mid/2 >= shader["intensity_min"] and intensity-mid/2 <= shader["intensity_max"]:
+        if intensity+midf/2 >= shader["intensity_min"] and intensity-midf/2 <= shader["intensity_max"]:
             intensity_multiplier = 1
             if abs(intensity-(shader["intensity_min"]+shader["intensity_max"])/2) > 0:
-                intensity_multiplier = 1.0/abs(intensity-(shader["intensity_min"]+shader["intensity_max"])/2)
-            for i in range(1 + round(intensity_multiplier*30*shader["weight"])):
+                intensity_multiplier = max(0.01, 1.0 - abs(intensity-(shader["intensity_min"]+shader["intensity_max"])/2))
+            for i in range(1 + round(intensity_multiplier*100*shader["weight"])):
                 choises.append(shader)
     if len(choises) == 0:
-        return get_shader(player, score, 0, 25)
+        return get_shader(player, score, 0, mid + 2)
     return choises[random.randint(0, len(choises)-1)]
 
 
-def read_shaders(shadercsv):
+def read_shaders(shaderjson):
+    with open(shaderjson) as f:
+        json_shaders = json.loads(f.read())
+        for shader in json_shaders:
+            path = os.path.dirname(__file__) + "/shaders/" + shader["filename"]
+            if os.path.isfile(path):
+                shader["name"] = shader["filename"].split(".")[0]
+                shader["display_name"] = " ".join(shader["filename"].split(".")[0].split("_")).title()
+                shader["file_path"] = path
+                if shader["filename"].split(".")[1] == "effect":
+                    shader["is_effect"] = True
+                else:
+                    shader["is_effect"] = False
+                shaders.append(shader)
+            else:
+                v_print(-1, f'Shader {shader["filename"]}, not found. no such file: {path}')
+
+    for i in range(5):
+        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i) + ".effect"
+        if os.path.isfile(fire_path):
+            fireshaders.append({
+                "name": "on_fire_" + str(i),
+                "display_name": "On Fire " + str(i),
+                "file_path": fire_path,
+                "intensity": str(i),
+                "is_effect": True,
+                "group": "on_fire"
+                })
+        else:
+            v_print(-1, f'Fire shader not found! No such file: {fire_path}')
+
+def read_csv_shaders(shadercsv):
+    shaders = json.loads()
     with open(shadercsv) as f:
         shaderlines = f.read().splitlines()
         for line in shaderlines[1:]:
@@ -527,7 +567,7 @@ def read_shaders(shadercsv):
 def reset_penalty_box():
     for item in obs.get_scene_item_list(obs_sources["penalty_screen"]).scene_items:
         obs.remove_scene_item(obs_sources["penalty_screen"], item["sceneItemId"])
-        obs.remove_input(item["sourceName"])
+        #obs.remove_input(item["sourceName"])
 
 
 def add_penalty_dvd(penalty_img, seat, penalty_index):

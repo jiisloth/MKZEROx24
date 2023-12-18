@@ -25,7 +25,7 @@ float4 mainImage(VertData v_in) : TARGET
     float2 center_pos = float2(0.5 + sin(sin(elapsed_time*0.02)*130.0)/6, 0.5 + cos(sin(elapsed_time*0.021)*130.0)/6);
     float2 uv = v_in.uv;
     if (power > 0.0){
-        float b = sqrt(dot((center_pos-float2(0.5)), center_pos-float2(0.5)));
+        float b = sqrt(dot((center_pos-float2(0.5,0.5)), center_pos-float2(0.5,0.5)));
         uv = center_pos  + normalize(v_in.uv - center_pos) * tan(distance(center_pos, v_in.uv) * (0.5+power*1.1)) * b / tan( b * (0.5+power*2.1));
     } else if(power < 0){
         float b;

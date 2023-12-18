@@ -1,0 +1,548 @@
+[
+  {
+    "filename": "wobblyeye.shader",
+    "intensity_min": 0.44,
+    "intensity_max": 0.64,
+    "group": "distort",
+    "weight": 3.11
+  },
+  {
+    "filename": "dreamland.shader",
+    "intensity_min": 0.49,
+    "intensity_max": 0.69,
+    "group": "colorscape",
+    "weight": 3.1
+  },
+  {
+    "filename": "tremble.effect",
+    "intensity_min": 0.72,
+    "intensity_max": 0.97,
+    "group": "quake",
+    "weight": 2.52
+  },
+  {
+    "filename": "SNES.shader",
+    "intensity_min": 0.02,
+    "intensity_max": 0.07,
+    "group": "reduce_color",
+    "weight": 10.55
+  },
+  {
+    "filename": "bad_cartoon.effect",
+    "intensity_min": 0.41,
+    "intensity_max": 0.57,
+    "group": "reduce_color",
+    "weight": 3.94
+  },
+  {
+    "filename": "few_features.shader",
+    "intensity_min": 0.65,
+    "intensity_max": 0.91,
+    "group": "glitch",
+    "weight": 2.45
+  },
+  {
+    "filename": "thick_boi.shader",
+    "intensity_min": -0.02,
+    "intensity_max": 0.11,
+    "group": "distort",
+    "weight": 4.64
+  },
+  {
+    "filename": "feeling_weird_again.shader",
+    "intensity_min": 0.32,
+    "intensity_max": 0.47,
+    "group": "chroma",
+    "weight": 4
+  },
+  {
+    "filename": "flip_up.shader",
+    "intensity_min": 0.11,
+    "intensity_max": 0.19,
+    "group": "shape",
+    "weight": 7.21
+  },
+  {
+    "filename": "shake.effect",
+    "intensity_min": 0.32,
+    "intensity_max": 0.5,
+    "group": "quake",
+    "weight": 3.52
+  },
+  {
+    "filename": "which_page.shader",
+    "intensity_min": 0.27,
+    "intensity_max": 0.38,
+    "group": "_which_page",
+    "weight": 5.32
+  },
+  {
+    "filename": "NES.shader",
+    "intensity_min": 0.51,
+    "intensity_max": 0.7,
+    "group": "reduce_color",
+    "weight": 3.19
+  },
+  {
+    "filename": "rotating.effect",
+    "intensity_min": 0.25,
+    "intensity_max": 0.37,
+    "group": "_rotating",
+    "weight": 4.94
+  },
+  {
+    "filename": "errors.shader",
+    "intensity_min": 0.28,
+    "intensity_max": 0.4,
+    "group": "glitch",
+    "weight": 5.1
+  },
+  {
+    "filename": "old_tv.shader",
+    "intensity_min": 0.06,
+    "intensity_max": 0.12,
+    "group": "chroma",
+    "weight": 9.2
+  },
+  {
+    "filename": "quake_1337.shader",
+    "intensity_min": 0.85,
+    "intensity_max": 1.14,
+    "group": "distort",
+    "weight": 2.22
+  },
+  {
+    "filename": "ripple.shader",
+    "intensity_min": 0.49,
+    "intensity_max": 0.68,
+    "group": "_ripple",
+    "weight": 3.34
+  },
+  {
+    "filename": "Pixels.shader",
+    "intensity_min": 0.07,
+    "intensity_max": 0.16,
+    "group": "pixel",
+    "weight": 6.31
+  },
+  {
+    "filename": "seasick.shader",
+    "intensity_min": 0.51,
+    "intensity_max": 0.71,
+    "group": "distort",
+    "weight": 3.02
+  },
+  {
+    "filename": "hold_the_light.shader",
+    "intensity_min": 0.77,
+    "intensity_max": 1.06,
+    "group": "shape",
+    "weight": 2.23
+  },
+  {
+    "filename": "in_and_out.shader",
+    "intensity_min": 0.26,
+    "intensity_max": 0.37,
+    "group": "_in_and_out",
+    "weight": 5.32
+  },
+  {
+    "filename": "need_moar_rgb.shader",
+    "intensity_min": 0.18,
+    "intensity_max": 0.28,
+    "group": "blur",
+    "weight": 6.31
+  },
+  {
+    "filename": "edgelord.shader",
+    "intensity_min": 0.24,
+    "intensity_max": 0.35,
+    "group": "_edgelord",
+    "weight": 5.55
+  },
+  {
+    "filename": "burning.shader",
+    "intensity_min": 0.33,
+    "intensity_max": 0.48,
+    "group": "_burning",
+    "weight": 4.07
+  },
+  {
+    "filename": "quake_pro.shader",
+    "intensity_min": 0.54,
+    "intensity_max": 0.75,
+    "group": "distort",
+    "weight": 3.02
+  },
+  {
+    "filename": "earthquake.effect",
+    "intensity_min": 0.72,
+    "intensity_max": 0.98,
+    "group": "quake",
+    "weight": 2.41
+  },
+  {
+    "filename": "hellworld.shader",
+    "intensity_min": 0.2,
+    "intensity_max": 0.36,
+    "group": "colorscape",
+    "weight": 3.82
+  },
+  {
+    "filename": "beer.shader",
+    "intensity_min": 0.01,
+    "intensity_max": 0.08,
+    "group": "blur",
+    "weight": 8.19
+  },
+  {
+    "filename": "Swirl.shader",
+    "intensity_min": 0.92,
+    "intensity_max": 1.22,
+    "group": "distort",
+    "weight": 2.1
+  },
+  {
+    "filename": "Game_Boy.shader",
+    "intensity_min": 0.71,
+    "intensity_max": 0.94,
+    "group": "colorscape",
+    "weight": 0.67
+  },
+  {
+    "filename": "feeling_weird.shader",
+    "intensity_min": -0.02,
+    "intensity_max": 0.02,
+    "group": "chroma",
+    "weight": 13.37
+  },
+  {
+    "filename": "black_n_white.shader",
+    "intensity_min": 0.28,
+    "intensity_max": 0.45,
+    "group": "colorscape",
+    "weight": 3.74
+  },
+  {
+    "filename": "who_broke_tiles.shader",
+    "intensity_min": 0.96,
+    "intensity_max": 1.27,
+    "group": "pixel",
+    "weight": 2.04
+  },
+  {
+    "filename": "Game_Boy___.shader",
+    "intensity_min": 0.5,
+    "intensity_max": 0.72,
+    "group": "colorscape",
+    "weight": 0.72
+  },
+  {
+    "filename": "few_bugs.shader",
+    "intensity_min": 0.54,
+    "intensity_max": 0.73,
+    "group": "glitch",
+    "weight": 3.28
+  },
+  {
+    "filename": "whaleeye.shader",
+    "intensity_min": 0.17,
+    "intensity_max": 0.32,
+    "group": "distort",
+    "weight": 4.17
+  },
+  {
+    "filename": "must_be_rainbowroad.shader",
+    "intensity_min": 0.28,
+    "intensity_max": 0.42,
+    "group": "_must_be_rainbowroad",
+    "weight": 4.49
+  },
+  {
+    "filename": "japanese_film.shader",
+    "intensity_min": 0.02,
+    "intensity_max": 0.07,
+    "group": "_japanese_film",
+    "weight": 10.55
+  },
+  {
+    "filename": "i_like_colors.shader",
+    "intensity_min": 0.22,
+    "intensity_max": 0.33,
+    "group": "_i_like_colors",
+    "weight": 5.32
+  },
+  {
+    "filename": "galleon_mode.shader",
+    "intensity_min": 0.01,
+    "intensity_max": 0.08,
+    "group": "colorscape",
+    "weight": 8.19
+  },
+  {
+    "filename": "wave.shader",
+    "intensity_min": 0.15,
+    "intensity_max": 0.25,
+    "group": "distort",
+    "weight": 5.97
+  },
+  {
+    "filename": "cartoon.effect",
+    "intensity_min": 0.01,
+    "intensity_max": 0.08,
+    "group": "reduce_color",
+    "weight": 8.19
+  },
+  {
+    "filename": "few_beers.shader",
+    "intensity_min": 0.33,
+    "intensity_max": 0.47,
+    "group": "blur",
+    "weight": 4.17
+  },
+  {
+    "filename": "waves.shader",
+    "intensity_min": 0.41,
+    "intensity_max": 0.59,
+    "group": "distort",
+    "weight": 3.46
+  },
+  {
+    "filename": "Game_Boy__.shader",
+    "intensity_min": 0.43,
+    "intensity_max": 0.63,
+    "group": "colorscape",
+    "weight": 0.78
+  },
+  {
+    "filename": "VHS.shader",
+    "intensity_min": 0.01,
+    "intensity_max": 0.08,
+    "group": "glitch",
+    "weight": 8.19
+  },
+  {
+    "filename": "just_one_beer.shader",
+    "intensity_min": 0.27,
+    "intensity_max": 0.46,
+    "group": "blur",
+    "weight": 3.33
+  },
+  {
+    "filename": "feeling_really_weird.shader",
+    "intensity_min": 0.36,
+    "intensity_max": 0.51,
+    "group": "chroma",
+    "weight": 3.94
+  },
+  {
+    "filename": "way_too_bright.shader",
+    "intensity_min": 0.41,
+    "intensity_max": 0.59,
+    "group": "remove_contrast",
+    "weight": 3.41
+  },
+  {
+    "filename": "another_vidya_tape.shader",
+    "intensity_min": 0.33,
+    "intensity_max": 0.46,
+    "group": "glitch",
+    "weight": 4.38
+  },
+  {
+    "filename": "blurry.shader",
+    "intensity_min": 0.11,
+    "intensity_max": 0.25,
+    "group": "blur",
+    "weight": 4.38
+  },
+  {
+    "filename": "flip_down.shader",
+    "intensity_min": 0.08,
+    "intensity_max": 0.14,
+    "group": "shape",
+    "weight": 9.2
+  },
+  {
+    "filename": "too_bright.shader",
+    "intensity_min": 0.21,
+    "intensity_max": 0.35,
+    "group": "remove_contrast",
+    "weight": 4.37
+  },
+  {
+    "filename": "fisheye.shader",
+    "intensity_min": -0.02,
+    "intensity_max": 0.02,
+    "group": "distort",
+    "weight": 13.37
+  },
+  {
+    "filename": "shady_af.shader",
+    "intensity_min": 0.02,
+    "intensity_max": 0.07,
+    "group": "reduce_color",
+    "weight": 10.55
+  },
+  {
+    "filename": "glass_tiles.shader",
+    "intensity_min": 0.26,
+    "intensity_max": 0.38,
+    "group": "_glass_tiles",
+    "weight": 5.1
+  },
+  {
+    "filename": "scoped.shader",
+    "intensity_min": 0.11,
+    "intensity_max": 0.18,
+    "group": "shape",
+    "weight": 8.38
+  },
+  {
+    "filename": "where_road.effect",
+    "intensity_min": 0.24,
+    "intensity_max": 0.34,
+    "group": "reduce_color",
+    "weight": 5.55
+  },
+  {
+    "filename": "whiteboard.shader",
+    "intensity_min": 0.25,
+    "intensity_max": 0.42,
+    "group": "colorscape",
+    "weight": 3.69
+  },
+  {
+    "filename": "Game_Boy_.shader",
+    "intensity_min": 0.71,
+    "intensity_max": 0.96,
+    "group": "colorscape",
+    "weight": 0.62
+  },
+  {
+    "filename": "my_eyes.shader",
+    "intensity_min": 0.32,
+    "intensity_max": 0.45,
+    "group": "_my_eyes",
+    "weight": 4.5
+  },
+  {
+    "filename": "pulse.effect",
+    "intensity_min": 0.31,
+    "intensity_max": 0.46,
+    "group": "_pulse",
+    "weight": 4
+  },
+  {
+    "filename": "blackboard.shader",
+    "intensity_min": 0.52,
+    "intensity_max": 0.75,
+    "group": "colorscape",
+    "weight": 2.77
+  },
+  {
+    "filename": "twist.shader",
+    "intensity_min": 0.66,
+    "intensity_max": 0.88,
+    "group": "distort",
+    "weight": 2.8
+  },
+  {
+    "filename": "roundabout.shader",
+    "intensity_min": 0.2,
+    "intensity_max": 0.35,
+    "group": "shape",
+    "weight": 4.26
+  },
+  {
+    "filename": "rotating_more.effect",
+    "intensity_min": 0.52,
+    "intensity_max": 0.73,
+    "group": "_rotating_more",
+    "weight": 2.99
+  },
+  {
+    "filename": "flashbacks.shader",
+    "intensity_min": 0.1,
+    "intensity_max": 0.25,
+    "group": "remove_contrast",
+    "weight": 3.89
+  },
+  {
+    "filename": "road_gone_again.effect",
+    "intensity_min": 0.31,
+    "intensity_max": 0.46,
+    "group": "reduce_color",
+    "weight": 4
+  },
+  {
+    "filename": "less_pixels.shader",
+    "intensity_min": 0.13,
+    "intensity_max": 0.21,
+    "group": "pixel",
+    "weight": 7.21
+  },
+  {
+    "filename": "rainy_day.shader",
+    "intensity_min": 0.59,
+    "intensity_max": 0.81,
+    "group": "blur",
+    "weight": 2.89
+  },
+  {
+    "filename": "brain_waves.shader",
+    "intensity_min": 0.29,
+    "intensity_max": 0.43,
+    "group": "blur",
+    "weight": 4.27
+  },
+  {
+    "filename": "homevideo.shader",
+    "intensity_min": 0.08,
+    "intensity_max": 0.14,
+    "group": "glitch",
+    "weight": 8.38
+  },
+  {
+    "filename": "VCR.shader",
+    "intensity_min": 0.45,
+    "intensity_max": 0.62,
+    "group": "glitch",
+    "weight": 3.68
+  },
+  {
+    "filename": "ripples.shader",
+    "intensity_min": 0.42,
+    "intensity_max": 0.57,
+    "group": "blur",
+    "weight": 4.03
+  },
+  {
+    "filename": "mosaic.shader",
+    "intensity_min": 0.35,
+    "intensity_max": 0.51,
+    "group": "pixel",
+    "weight": 3.86
+  },
+  {
+    "filename": "thin_boi.shader",
+    "intensity_min": 0.06,
+    "intensity_max": 0.12,
+    "group": "distort",
+    "weight": 9.2
+  },
+  {
+    "filename": "is_this_rainbowroad.shader",
+    "intensity_min": 0.06,
+    "intensity_max": 0.15,
+    "group": "_is_this_rainbowroad",
+    "weight": 6.31
+  },
+  {
+    "filename": "blink_n_miss.shader",
+    "intensity_min": 0.46,
+    "intensity_max": 0.65,
+    "group": "_blink_n_miss",
+    "weight": 3.34
+  }
+]
