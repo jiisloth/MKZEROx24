@@ -4,7 +4,7 @@ uniform int Strength<
     int minimum = 0;
     int maximum = 25;
     int step = 1;
-> = 5.0;
+> = 3.0;
 uniform float Mask_Left<
     string label = "Mask left (1.0)";
     string widget_type = "slider";

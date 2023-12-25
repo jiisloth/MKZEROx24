@@ -398,17 +398,13 @@ float4 mainImage(VertData v_in) : TARGET
     {
         float4 color = image.Sample(textureSampler, v_in.uv);
         float4 original_color = color;
-        if (color.a > 0.0)
-        {    
-            color.r = color.r+3.0;
-            float luma = color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
-            if (Replace_Image_Color)
-                color = float4(luma, luma, luma, luma);            
-            rgba = lerp(original_color, lerp(original_color,rgba * color,rgba.a), alpha);
-        }
-        else
-        {
-            rgba = color;
+        color.r = color.r+3.0;
+        float luma = color.r * 0.299 + color.g * 0.587 + color.b * 0.114;
+        if (Replace_Image_Color)
+            color = float4(luma, luma, luma, luma);
+        rgba = lerp(original_color, lerp(original_color,rgba * color,rgba.a), alpha);
+        if (original_color.a < 1.0){
+            rgba.a = 1.0;
         }
 		
     }

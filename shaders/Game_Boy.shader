@@ -35,21 +35,21 @@ uniform float brightness<
     float minimum = -1.0;
     float maximum = 1.0;
     float step = 0.01;
-> = 0.43;
+> = 0.93;
 uniform float contrast<
     string label = "Contrast";
     string widget_type = "slider";
     float minimum = -10.0;
     float maximum = 10.0;
     float step = 0.01;
-> = 2.42;
+> = 1.83;
 uniform float gamma<
     string label = "Gamma";
     string widget_type = "slider";
     float minimum = 0.0;
     float maximum = 10.0;
     float step = 0.01;
-> = 1.32;
+> = 3.90;
 
 uniform float4 color_1 = {0.004, 0.016, 0.141, 1.0};
 uniform float4 color_2 = {0.149, 0.349, 0.208, 1.0};

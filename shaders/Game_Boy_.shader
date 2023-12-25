@@ -42,14 +42,14 @@ uniform float contrast<
     float minimum = -10.0;
     float maximum = 10.0;
     float step = 0.01;
-> = -6.20;
+> = -3.79;
 uniform float gamma<
     string label = "Gamma";
     string widget_type = "slider";
     float minimum = 0.0;
     float maximum = 10.0;
     float step = 0.01;
-> = 6.84;
+> = 10.0;
 
 uniform float4 color_1 = {0.910, 0.906, 0.043, 1.0};
 uniform float4 color_2 = {0.988, 0.651, 0.047, 1.0};

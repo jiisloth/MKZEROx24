@@ -9,14 +9,14 @@ uniform float size<
     float minimum = 0.001;
     float maximum = 0.5;
     float step = 0.01;
-> = 0.5;
+> = 0.4;
 uniform float blurSize<
     string label = "Blur Radius";
     string widget_type = "slider";
     float minimum = 0.0;
     float maximum = 100.0;
     float step = 0.01;
-> = 32.0; // BLUR SIZE (Radius)
+> = 10.0; // BLUR SIZE (Radius)
 uniform float trail_strength<
     string label = "Trail Strength";
     string widget_type = "slider";
@@ -30,7 +30,7 @@ uniform float trail_color<
     float minimum = 0.0;
     float maximum = 100.0;
     float step = 0.01;
-> = 15.0; 
+> = 55.0;
 uniform float speed<
     string label = "Speed";
     string widget_type = "slider";
@@ -82,7 +82,7 @@ float2 Drops(float2 uv, float t) {
     
     // DEFINE GRID
     uv.y += t*0.8;
-    float2 a = float2(6., 1.);
+    float2 a = float2(5., 1.0);
     float2 grid = a*2.;
     float2 id = floor(uv*grid);
     

@@ -36,6 +36,22 @@ parser.add_argument('--reset',
 parser.add_argument('-r', '--reconnect',
                     help='Reconnects without recalculating current shaders.', action="store_true")
 
+subparsers = parser.add_subparsers(dest="preview", help='Preview')
+prewparse = subparsers.add_parser('preview')
+prewparse.add_argument('-d', '--duration', type=int, default=15,
+                    help='duration for each shader in preview')
+prewparse.add_argument('-r', '--record', action="store_true",
+                    help='Record shaders')
+prewparse.add_argument('-e', '--evaluate', type=int, default=1,
+                    help='Ask for N scores to be given for each shader and store values.')
+prewparse.add_argument('-s', '--sort', choices='NSFR', default="F",
+                    help='Sort shaders by Name, current Score, order in File, Random')
+prewparse.add_argument('--number', choices='OTBN', default="N",
+                    help='Show shader number in OBS, Terminal, Both or None.')
+prewparse.add_argument('--name', choices='OTBN', default="N",
+                    help='Show shader name in OBS, Terminal, Both or None.')
+
+
 obs_sources = {
     "end": "_MKZx24",
     "main": "Game_MKZx24",
@@ -44,6 +60,7 @@ obs_sources = {
     "penalty_screen": "PenaltyScreen_MKZx24",
     "penalty_item": "PENALTYITEM_#_MKZx24",
     "game_source": "Source_MKZx24",
+    "preview_source": "Source_MKZx24",
     "dummy_filter": "set_screen_MKZx24",
 }
 
@@ -72,7 +89,7 @@ scoreboard: connect
 shaders = []
 fireshaders = []
 
-penalty_img_size = 250
+penalty_img_size = 225
 
 
 def main():
@@ -84,13 +101,26 @@ def main():
             break
         if message["type"] == "all_states":
             v_print(2, f'Got scoreboard states')
+            old_states = states[:]
             states = message["state"]
             v_print(4, states)
             if settings["reconnect"]:
                 settings["reconnect"] = False
                 continue
+            reset = True
+            if len(old_states) == len(states):
+                reset = False
+                for s in range(len(old_states)):
+                    if old_states[s] != states[s]:
+                        reset = True
+                        break
+
             reset_states()
-            update_shaders()
+            if reset:
+                update_shaders()
+        if message["type"] == "reset_state":
+            v_print(2, f'Host reconnected.')
+            scoreboard.send(json.dumps({'type': 'get_all_states'}))
         if message["type"] == "state":
             v_print(2, f'Got another scoreboard state.')
             v_print(4, f'{message["state"]}')
@@ -116,6 +146,10 @@ def init_conf():
                 ws_config[cfg[0]] = cfg[1]
             elif line:
                 v_print(-1, f'Error reading config on line {i+1}, {line}')
+
+    if args.preview:
+        print("LUL")
+
 
     obs = obspy.ReqClient(host=ws_config["OBS_WS_URL"], port=int(ws_config["OBS_WS_PORT"]),
                           password=ws_config["OBS_WS_PASS"], timeout=3)
@@ -399,6 +433,9 @@ def update_shaders():
             for s in range(penalties):
                 penalty_source = settings["penalty_img"][random.randint(0, len(settings["penalty_img"])-1)]
                 game_sources[game_screen]["penalties"].append([penalty_source, state["line"][p], s])
+                if random.random() > 0.5:
+                    penalty_source = settings["penalty_img"][random.randint(0, len(settings["penalty_img"])-1)]
+                    game_sources[game_screen]["penalties"].append([penalty_source, state["line"][p], s])
     if settings["norolling"]:
         set_shaders(game_sources)
     else:
@@ -550,7 +587,7 @@ def read_csv_shaders(shadercsv):
                     v_print(-1, f'Shader {shader[0]}, not found. no such file: {path}')
         v_print(1, f'Added {len(shaders)} shaders!')
     for i in range(5):
-        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i) + ".effect"
+        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i+1) + ".effect"
         if os.path.isfile(fire_path):
             fireshaders.append({
                 "name": "on_fire_" + str(i),

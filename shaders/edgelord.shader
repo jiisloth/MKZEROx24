@@ -8,7 +8,7 @@ uniform float sensitivity<
     float minimum = 0.0;
     float maximum = 1.0;
     float step = 0.002;
-> = 0.005;
+> = 0.007;
 uniform bool invert_edge;
 uniform float4 edge_color = {1.0,1.0,0.0,1.0};
 uniform bool edge_multiply = false;

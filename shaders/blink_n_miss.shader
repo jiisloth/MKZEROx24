@@ -4,11 +4,13 @@ uniform float speed<
     float minimum = 0.0;
     float maximum = 100.0;
     float step = 0.01;
-> = 0.5;
+> = 2.0;
 
 float4 mainImage(VertData v_in) : TARGET
 {
 	float4 color = image.Sample(textureSampler, v_in.uv);
 	float t = elapsed_time * speed;
-	return float4(color.r, color.g, color.b, color.a * (1 + sin(t)) / 2);
+
+	float blink = clamp((1.0 + sin(t)) / 2.0 + (1.0 + sin(2.1*t)*1.3) / 2.0,0.0,1.0);
+	return float4(color.r, color.g, color.b, color.a * blink);
 }

@@ -12,7 +12,7 @@ uniform float Focus_Percent<
     float minimum = 0.0;
     float maximum = 100.0;
     float step = 0.01;
-> = 15.0;
+> = 9.0;
 uniform bool Glitch;
 uniform float4 Spotlight_Color = {1.000, 0.973, 0.059 ,1.0};
 uniform float Horizontal_Offset<

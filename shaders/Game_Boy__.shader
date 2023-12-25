@@ -49,7 +49,7 @@ uniform float gamma<
     float minimum = 0.0;
     float maximum = 10.0;
     float step = 0.01;
-> = 5.13;
+> = 5.19;
 
 uniform float4 color_1 = {0.200, 0.173, 0.000, 1.0};
 uniform float4 color_2 = {0.275, 0.529, 0.059, 1.0};
