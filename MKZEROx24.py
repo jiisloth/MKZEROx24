@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 import time
@@ -39,29 +40,28 @@ parser.add_argument('-r', '--reconnect',
 subparsers = parser.add_subparsers(dest="preview", help='Preview')
 prewparse = subparsers.add_parser('preview')
 prewparse.add_argument('-d', '--duration', type=int, default=15,
-                    help='duration for each shader in preview')
+                       help='duration for each shader in preview')
 prewparse.add_argument('-r', '--record', action="store_true",
-                    help='Record shaders')
+                       help='Record shaders')
 prewparse.add_argument('-e', '--evaluate', type=int, default=1,
-                    help='Ask for N scores to be given for each shader and store values.')
+                       help='Ask for N scores to be given for each shader and store values.')
 prewparse.add_argument('-s', '--sort', choices='NSFR', default="F",
-                    help='Sort shaders by Name, current Score, order in File, Random')
+                       help='Sort shaders by Name, current Score, order in File, Random')
 prewparse.add_argument('--number', choices='OTBN', default="N",
-                    help='Show shader number in OBS, Terminal, Both or None.')
+                       help='Show shader number in OBS, Terminal, Both or None.')
 prewparse.add_argument('--name', choices='OTBN', default="N",
-                    help='Show shader name in OBS, Terminal, Both or None.')
-
+                       help='Show shader name in OBS, Terminal, Both or None.')
 
 obs_sources = {
     "end": "_MKZx24",
     "main": "Game_MKZx24",
-    "roller": "Roller_MKZx24",
+    "roller": "Roller#_MKZx24",
     "game_screen": "GameScreen#_MKZx24",
-    "penalty_screen": "PenaltyScreen_MKZx24",
+    "overlay_scene": "OverlayScene_MKZx24",
     "penalty_item": "PENALTYITEM_#_MKZx24",
     "game_source": "Source_MKZx24",
     "preview_source": "Source_MKZx24",
-    "dummy_filter": "set_screen_MKZx24",
+    "crop_filter": "set_screen_MKZx24",
 }
 
 players = []
@@ -82,6 +82,7 @@ settings = {
     "penalty_img": [],
     "runnin_id": 0
 }
+thread_id = 0
 
 obs: obspy.ReqClient
 scoreboard: connect
@@ -89,8 +90,38 @@ scoreboard: connect
 shaders = []
 fireshaders = []
 
-penalty_img_size = 225
+penalty_img_size = 250
 
+screens = [
+    [
+        {"size_x": 1, "size_y": 1, "pos_x": 0, "pos_y": 0,
+         "crop": {"left": 0, "top": 0, "right": 0, "bottom": 0}},
+    ],
+    [
+        {"size_x": 1, "size_y": 0.5, "pos_x": 0, "pos_y": 0,
+         "crop": {"left": 0, "top": 0, "right": 0, "bottom": 0.5}},
+        {"size_x": 1, "size_y": 0.5, "pos_x": 0, "pos_y": 0.5,
+         "crop": {"left": 0, "top": 0.5, "right": 0, "bottom": 0}}
+    ],
+    [
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0, "pos_y": 0,
+         "crop": {"left": 0, "top": 0, "right": 0.5, "bottom": 0.5}},
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0.5, "pos_y": 0,
+         "crop": {"left": 0.5, "top": 0, "right": 0, "bottom": 0.5}},
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0, "pos_y": 0.5,
+         "crop": {"left": 0, "top": 0.5, "right": 0.5, "bottom": 0}},
+    ],
+    [
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0, "pos_y": 0,
+         "crop": {"left": 0, "top": 0, "right": 0.5, "bottom": 0.5}},
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0.5, "pos_y": 0,
+         "crop": {"left": 0.5, "top": 0, "right": 0, "bottom": 0.5}},
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0, "pos_y": 0.5,
+         "crop": {"left": 0, "top": 0.5, "right": 0.5, "bottom": 0}},
+        {"size_x": 0.5, "size_y": 0.5, "pos_x": 0.5, "pos_y": 0.5,
+         "crop": {"left": 0.5, "top": 0.5, "right": 0, "bottom": 0}},
+    ]
+]
 
 def main():
     global states
@@ -145,11 +176,10 @@ def init_conf():
             if len(cfg) == 2:
                 ws_config[cfg[0]] = cfg[1]
             elif line:
-                v_print(-1, f'Error reading config on line {i+1}, {line}')
+                v_print(-1, f'Error reading config on line {i + 1}, {line}')
 
     if args.preview:
         print("LUL")
-
 
     obs = obspy.ReqClient(host=ws_config["OBS_WS_URL"], port=int(ws_config["OBS_WS_PORT"]),
                           password=ws_config["OBS_WS_PASS"], timeout=3)
@@ -184,43 +214,65 @@ def init_conf():
         settings["norolling"] = args.norolling
 
         read_shaders(args.shaders)
+        create_shader_js()
     return True
 
 
+def create_shader_js():
+    js = "const shaders = [\n"
+    for shader in shaders:
+        js += f'  {{"name": "{shader["name"]}", "intensity": {(shader["intensity_min"]+shader["intensity_max"])/2}}},\n'
+    js += "];"
+    with open("shader_rolls/shaders.js", "w") as f:
+        f.write(js)
+
 def get_penalty_items():
     items = []
-    penalty_dir = os.path.dirname(__file__) +"/penalty_img"
+    penalty_dir = os.path.dirname(__file__) + "/penalty_img"
     files = os.listdir(penalty_dir)
     for f in files:
-        if os.path.isfile(penalty_dir+"/"+f):
-            image = Image.open(penalty_dir+"/"+f)
+        if os.path.isfile(penalty_dir + "/" + f):
+            image = Image.open(penalty_dir + "/" + f)
             w, h = image.size
-            scale = penalty_img_size/max(w, h)
+            scale = penalty_img_size / max(w, h)
             items.append({"file": f, "scale": scale})
     return items
 
 
 def connect_to_scoreboard(gamecode, ws_config):
     global scoreboard
-    scoreboard = connect("wss://"+ws_config["SCOREBOARD_WS_URL"]+":"+ws_config["SCOREBOARD_WS_PORT"])
+    scoreboard = connect("wss://" + ws_config["SCOREBOARD_WS_URL"] + ":" + ws_config["SCOREBOARD_WS_PORT"])
     if not scoreboard:
         v_print(-1, f'Could not connect to Scoreboard')
         return {}
     v_print(1, f'Connected to scoreboard server.')
+    lastcode = ""
+    if os.path.isfile(os.path.dirname(__file__) + "/gamecode.txt"):
+        with open("gamecode.txt", "r") as f:
+            lastcode = f.read()
     while True:
         if not gamecode:
-            gamecode = input("Insert scoreboard gamecode: ")
-            if gamecode == "":
-                v_print(-1, f'Aborted scoreboard connection.')
-                return {}
+
+            if lastcode != "":
+                gamecode = input(f'Insert scoreboard gamecode ({lastcode}): ')
+                if gamecode == "":
+                    gamecode = lastcode
+            else:
+                gamecode = input("Insert scoreboard gamecode: ")
+                if gamecode == "":
+                    v_print(-1, f'Aborted scoreboard connection.')
+                    return {}
 
         scoreboard.send(json.dumps({'type': 'join', 'secret': gamecode}))
         message = json.loads(scoreboard.recv())
         if message["type"] == "error":
             v_print(-1, f'Connecting with gamecode: {gamecode} failed')
+            lastcode = ""
             gamecode = None
         if message["type"] == "joined":
             settings["gamecode"] = gamecode
+            with open("gamecode.txt", "w") as f:
+                f.write(gamecode)
             v_print(2, f'Joined scoreboard successfully.')
             scoreboard.send(json.dumps({'type': 'get_settings'}))
         if message["type"] == "settings":
@@ -285,16 +337,11 @@ def init_scenes():
     main_sid = add_source_to_scene(obs_sources["main"], obs_sources["game_source"])
     obs.set_scene_item_enabled(obs_sources["main"], main_sid, False)
 
-    dummy_settings = {'shader_text': "",
+    crop_settings = {
                       "expand_bottom": -settings["video"]["y"] / 2,
                       "expand_right": -settings["video"]["x"] / 2}
+    screen_settings = screens[settings["controllers"]-1]
 
-    screen_positions = [
-        {"x": 0, "y": 0},
-        {"x": settings["video"]["x"] / 2, "y": 0},
-        {"x": 0, "y": settings["video"]["y"] / 2},
-        {"x": settings["video"]["x"] / 2, "y": settings["video"]["y"] / 2},
-    ]
     for i in range(settings["controllers"]):
         game_screen = obs_sources["game_screen"].replace("#", str(i + 1))
         to_del += create_or_reset_scene(scenes, game_screen)
@@ -302,36 +349,25 @@ def init_scenes():
         screen_id = add_source_to_scene(obs_sources["main"], game_screen)
         for f in obs.get_source_filter_list(game_screen).filters:
             obs.remove_source_filter(game_screen, f["filterName"])
+        crop_settings = {
+            "left": screen_settings[i]["crop"]["left"] * settings["video"]["x"],
+            "top": screen_settings[i]["crop"]["top"] * settings["video"]["y"],
+            "right": screen_settings[i]["crop"]["right"] * settings["video"]["x"],
+            "bottom": screen_settings[i]["crop"]["bottom"] * settings["video"]["y"],
+        }
 
-        obs.create_source_filter(game_screen, obs_sources["dummy_filter"], "shader_filter", dummy_settings)
+        obs.create_source_filter(game_screen, obs_sources["crop_filter"], "crop_filter", crop_settings)
         obs.set_scene_item_transform(obs_sources["main"], screen_id, {
-            'positionX': screen_positions[i]["x"],
-            'positionY': screen_positions[i]["y"],
+            'positionX': screen_settings[i]["pos_x"] * settings["video"]["x"],
+            'positionY': screen_settings[i]["pos_y"] * settings["video"]["y"],
         })
-        obs.set_scene_item_transform(game_screen, source_id, {
-            'positionX': 0,
-            'positionY': 0,
-            'cropTop': screen_positions[i]["y"],
-            'cropLeft': screen_positions[i]["x"],
-            'cropRight': settings["video"]["x"] / 2 - screen_positions[i]["x"],
-            'cropBottom': settings["video"]["y"] / 2 - screen_positions[i]["y"],
-        })
+
         obs.set_scene_item_index(obs_sources["main"], screen_id, 0)
 
-    to_del += create_or_reset_scene(scenes, obs_sources["penalty_screen"])
-    for i in obs.get_scene_item_list(obs_sources["penalty_screen"]).scene_items:
-        obs.remove_scene_item(obs_sources["penalty_screen"], i["sceneItemId"])
-    add_source_to_scene(obs_sources["main"], obs_sources["penalty_screen"])
-
-    if obs_sources["roller"] in items:
-        obs.set_input_name(obs_sources["roller"], obs_sources["roller"] + "_old")
-        obs.remove_input(obs_sources["roller"] + "_old")
-    browser_settings = {
-        'url': "file://" + os.path.dirname(__file__) + "/index.html",
-        'width': settings["video"]["x"],
-        'height': settings["video"]["y"]
-    }
-    obs.create_input(obs_sources["main"], obs_sources["roller"], "browser_source", browser_settings, True)
+    to_del += create_or_reset_scene(scenes, obs_sources["overlay_scene"])
+    for i in obs.get_scene_item_list(obs_sources["overlay_scene"]).scene_items:
+        obs.remove_scene_item(obs_sources["overlay_scene"], i["sceneItemId"])
+    add_source_to_scene(obs_sources["main"], obs_sources["overlay_scene"])
 
     for s in to_del:
         obs.remove_scene(s)
@@ -351,7 +387,7 @@ def reset_states():
     global states
     for p in players:
         p["shaders"] = []
-        random.seed(int(settings["seed"]))
+    random.seed(int(settings["seed"]))
     last_state = states[0]
     for state in states:
         ret = check_states(state, last_state)
@@ -370,6 +406,7 @@ def check_states(state, last_state):
             if state["wins"][p] - 1 == last_state["wins"][p]:
                 winner = p
             if state["wins"][p] < last_state["wins"][p]:
+                v_print(2, "Went backwards, reseting states.")
                 # Went backwards
                 return -2
             if state["wins"][p] == 0:
@@ -380,7 +417,7 @@ def check_states(state, last_state):
                 jonne = p
 
         if winner >= 0:
-            players[winner]["score"] += 1/3 + state["fire"][winner]/5
+            players[winner]["score"] += 1 / 3 + state["fire"][winner] / 5
             if jonne_ready and jonne >= 0:
                 players[jonne]["score"] -= 1
                 if players[jonne]["score"] < 0:
@@ -389,17 +426,22 @@ def check_states(state, last_state):
 
 
 def update_shaders():
+    global thread_id
+    thread_id += 1
     if not settings["norolling"]:
-        obs.set_scene_item_enabled(obs_sources["main"], obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id, True)
+        obs.set_scene_item_enabled(obs_sources["main"],
+                                   obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id,
+                                   True)
         time.sleep(0.5)
 
     state = states[-1]
+
     reset_penalty_box()
     for c in range(settings["controllers"]):
-        game_screen = obs_sources["game_screen"].replace("#", str(c+1))
+        game_screen = obs_sources["game_screen"].replace("#", str(c + 1))
         shader_list = obs.get_source_filter_list(game_screen)
         for shader in shader_list.filters:
-            if shader["filterName"] != obs_sources["dummy_filter"]:
+            if shader["filterName"] != obs_sources["crop_filter"]:
                 obs.remove_source_filter(game_screen, shader["filterName"])
     game_sources = {}
     wins = state["wins"][:]
@@ -408,7 +450,7 @@ def update_shaders():
 
     for p in range(len(players)):
         if state["line"][p] < settings["controllers"]:
-            game_screen = obs_sources["game_screen"].replace("#", str(state["line"][p]+1))
+            game_screen = obs_sources["game_screen"].replace("#", str(state["line"][p] + 1))
             game_sources[game_screen] = {"wins": None, "score": None, "lead": None, "fire": None, "penalties": []}
             players[p]["shaders"] = []
             if state["wins"][p] > 0:
@@ -417,66 +459,69 @@ def update_shaders():
                 game_sources[game_screen]["wins"] = shader
 
             if players[p]["score"] >= 1:
-                shader = get_shader(p, players[p]["score"], settings["shader-random"]*2, settings["shader-max-range"]*2)
+                shader = get_shader(p, players[p]["score"], settings["shader-random"] * 2,
+                                    settings["shader-max-range"] * 2)
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["score"] = shader
 
             if state["wins"][p] == wins[-1] and windif > 0:
-                shader = get_shader(p, min(5 + windif*5, settings["rounds"]), 0, settings["rounds"]/3)
+                shader = get_shader(p, min(5 + windif * 5, settings["rounds"]), 0, settings["rounds"] / 3)
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["lead"] = shader
-                
+
             fire = min(state["fire"][p], len(fireshaders))
             if fire > 0:
                 game_sources[game_screen]["fire"] = fireshaders[fire]
             penalties = state["spes"][p].count("-")
             for s in range(penalties):
-                penalty_source = settings["penalty_img"][random.randint(0, len(settings["penalty_img"])-1)]
-                game_sources[game_screen]["penalties"].append([penalty_source, state["line"][p], s])
-                if random.random() > 0.5:
-                    penalty_source = settings["penalty_img"][random.randint(0, len(settings["penalty_img"])-1)]
-                    game_sources[game_screen]["penalties"].append([penalty_source, state["line"][p], s])
+                count = math.ceil(pow(random.random(), 5) * 6 + 0.001)
+                for pp in range(count):
+                    penalty_source = settings["penalty_img"][random.randint(0, len(settings["penalty_img"]) - 1)]
+                    game_sources[game_screen]["penalties"].append(
+                        {"source": penalty_source, "seat": state["line"][p], "intensity": s, "multiplier": count})
     if settings["norolling"]:
         set_shaders(game_sources)
     else:
-        update_rolls(shaders[:], game_sources)
-        Thread(target=set_shaders, args=[game_sources]).start()
+        set_rollers(game_sources)
+        Thread(target=set_shaders, args=[game_sources, thread_id], daemon=True).start()
 
 
-def update_rolls(shaderlist, game_sources):
-    # Terrible horrible jank to pass shaders to obs browser source...
-    random.shuffle(shaderlist)
-    sltjs = []
-    sltjsi = []
-    for s in range(len(shaderlist)):
-        sltjs.append(shaderlist[s]["name"])
-        sltjsi.append(str((shaderlist[s]["intensity_min"]+shaderlist[s]["intensity_max"])/2) +"$"+shaderlist[s]["name"])
-    jsshaders = []
-    for source in game_sources.keys():
-        sourceshaderindex = []
+def set_rollers(game_sources):
+    screensettings = screens[settings["controllers"]-1]
+    for c in range(settings["controllers"]):
+        source = obs_sources["game_screen"].replace("#", str(c + 1))
+        atributes = ""
         for k in ["wins", "score", "lead"]:
             if game_sources[source][k]:
-                sourceshaderindex.append(str(sltjs.index(game_sources[source][k]["name"])))
+                atributes += str(shaders.index(game_sources[source][k]))
             else:
-                sourceshaderindex.append("-1")
-        jsshaders.append(source + "=" + ",".join(sourceshaderindex))
-    attributes = ",".join(sltjsi) + "&" + "&".join(jsshaders)
-    obs.set_input_settings(obs_sources["roller"], {
-        'width': settings["video"]["x"],
-        'height': settings["video"]["y"],
-        'is_local_file': False,
-        'restart_when_active': True,
-        'shutdown': True,
-        'url': "file://" + os.path.dirname(__file__) + "/index.html?" + attributes
-    }, False)
+                atributes += "-1"
+            if k != "lead":
+                atributes += "&"
+        browser_settings = {
+            'url': "file://" + os.path.dirname(__file__) + "/shader_rolls/index.html?"+atributes,
+            'width': settings["video"]["x"] * screensettings[c]["size_x"],
+            'height': settings["video"]["y"]*2 * screensettings[c]["size_y"]
+        }
+        siid = obs.create_input(obs_sources["overlay_scene"], obs_sources["roller"].replace("#", str(c + 1)), "browser_source", browser_settings, True)
+        browser_transform = {
+            'positionX': settings["video"]["x"] * screensettings[c]["pos_x"],
+            'positionY': settings["video"]["y"] * (screensettings[c]["pos_y"]-0.5),
+        }
+        obs.set_scene_item_transform(obs_sources["overlay_scene"], siid.scene_item_id, browser_transform)
 
 
-def set_shaders(game_sources):
-
+def set_shaders(game_sources, t_id):
     if not settings["norolling"]:
         time.sleep(7.5)
-        obs.set_scene_item_enabled(obs_sources["main"], obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id, False)
+        obs.set_scene_item_enabled(obs_sources["main"],
+                                   obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id,
+                                   False)
         time.sleep(0.5)
+    if t_id != thread_id:
+        v_print(2, "Thread grew too old. (Newer state available) Terminating.")
+        return
+
     v_print(2, "Setting following effects for players:")
     to_print = {}
     splits = obs_sources["game_screen"].split("#")
@@ -491,11 +536,12 @@ def set_shaders(game_sources):
                 else:
                     to_print[source_i] += f' {k.ljust(10)}: '
                     for p in game_sources[source][k]:
-                        to_print[source_i] += f' {p[0]["file"].ljust(30)}'
-                        add_penalty_dvd(p[0], p[1], p[2])
+                        to_print[source_i] += f' {p["source"]["file"].ljust(30)}'
+                        add_penalty_dvd(p)
     for i in range(len(game_sources.keys())):
-        if to_print[i+1] != "":
-            v_print(2, str(i+1) + ": " + to_print[i+1])
+        if to_print[i + 1] != "":
+            v_print(2, str(i + 1) + ": " + to_print[i + 1])
+    return
 
 
 def create_shader(source, shader):
@@ -509,24 +555,25 @@ def create_shader(source, shader):
 
 def get_shader(player, score, fir, mid):
     global players
-    midf = mid/settings["rounds"]
-    firf = fir/settings["rounds"]
-    intensity = score/settings["rounds"]
-    intensity += firf * random.random() - firf/2
+    midf = mid / settings["rounds"]
+    firf = fir / settings["rounds"]
+    intensity = score / settings["rounds"]
+    intensity += firf * random.random() - firf / 2
     intensity = max(min(intensity, 1), 0)
     choises = []
     for shader in shaders:
         if shader["group"] in players[player]["shaders"]:
             continue
-        if intensity+midf/2 >= shader["intensity_min"] and intensity-midf/2 <= shader["intensity_max"]:
+        if intensity + midf / 2 >= shader["intensity_min"] and intensity - midf / 2 <= shader["intensity_max"]:
             intensity_multiplier = 1
-            if abs(intensity-(shader["intensity_min"]+shader["intensity_max"])/2) > 0:
-                intensity_multiplier = max(0.01, 1.0 - abs(intensity-(shader["intensity_min"]+shader["intensity_max"])/2))
-            for i in range(1 + round(intensity_multiplier*100*shader["weight"])):
+            if abs(intensity - (shader["intensity_min"] + shader["intensity_max"]) / 2) > 0:
+                intensity_multiplier = max(0.01, 1.0 - abs(
+                    intensity - (shader["intensity_min"] + shader["intensity_max"]) / 2))
+            for i in range(1 + round(intensity_multiplier * 100 * shader["weight"])):
                 choises.append(shader)
     if len(choises) == 0:
         return get_shader(player, score, 0, mid + 2)
-    return choises[random.randint(0, len(choises)-1)]
+    return choises[random.randint(0, len(choises) - 1)]
 
 
 def read_shaders(shaderjson):
@@ -547,18 +594,19 @@ def read_shaders(shaderjson):
                 v_print(-1, f'Shader {shader["filename"]}, not found. no such file: {path}')
 
     for i in range(5):
-        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i) + ".effect"
+        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i + 1) + ".effect"
         if os.path.isfile(fire_path):
             fireshaders.append({
-                "name": "on_fire_" + str(i),
-                "display_name": "On Fire " + str(i),
+                "name": "on_fire_" + str(i + 1),
+                "display_name": "On Fire " + str(i + 1),
                 "file_path": fire_path,
-                "intensity": str(i),
+                "intensity": i + 1,
                 "is_effect": True,
                 "group": "on_fire"
-                })
+            })
         else:
             v_print(-1, f'Fire shader not found! No such file: {fire_path}')
+
 
 def read_csv_shaders(shadercsv):
     shaders = json.loads()
@@ -576,7 +624,7 @@ def read_csv_shaders(shadercsv):
                                    "intensity_max": float(shader[2]),
                                    "is_effect": False,
                                    "group": shader[3],
-                                   "weight": float(shader[4])/float(max(1, int(shader[2])-int(shader[1]))*0.3)
+                                   "weight": float(shader[4]) / float(max(1, int(shader[2]) - int(shader[1])) * 0.3)
                                    }
                     if shader[3] == "":
                         shader_conf["group"] = shader_conf["name"].split("_")[0]
@@ -587,7 +635,7 @@ def read_csv_shaders(shadercsv):
                     v_print(-1, f'Shader {shader[0]}, not found. no such file: {path}')
         v_print(1, f'Added {len(shaders)} shaders!')
     for i in range(5):
-        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i+1) + ".effect"
+        fire_path = os.path.dirname(__file__) + "/shaders/on_fire_" + str(i + 1) + ".effect"
         if os.path.isfile(fire_path):
             fireshaders.append({
                 "name": "on_fire_" + str(i),
@@ -596,52 +644,57 @@ def read_csv_shaders(shadercsv):
                 "intensity": str(i),
                 "is_effect": True,
                 "group": "on_fire"
-                })
+            })
         else:
             v_print(-1, f'Fire shader not found! No such file: {fire_path}')
 
 
 def reset_penalty_box():
-    for item in obs.get_scene_item_list(obs_sources["penalty_screen"]).scene_items:
-        obs.remove_scene_item(obs_sources["penalty_screen"], item["sceneItemId"])
-        #obs.remove_input(item["sourceName"])
+    for item in obs.get_scene_item_list(obs_sources["overlay_scene"]).scene_items:
+        obs.remove_scene_item(obs_sources["overlay_scene"], item["sceneItemId"])
+        # obs.remove_input(item["sourceName"])
 
 
-def add_penalty_dvd(penalty_img, seat, penalty_index):
+def add_penalty_dvd(penalty):
     penaltyname = obs_sources["penalty_item"].replace("#", str(settings["runnin_id"]))
     settings["runnin_id"] += 1
     hue_shift = False
     if random.random() > 0.8:
         hue_shift = True
-    crop = penalty_img_size
+    crop_x = penalty_img_size + random.randint(0, 80) - 50
+    crop_y = penalty_img_size + random.randint(0, 80) - 50
     vidset = settings["video"]
     penalty_settings = {'color_shift': hue_shift,
                         'hue_shift': 0,
                         'linear_alpha': True,
-                        'logo_scale': penalty_img["scale"] * (0.9+random.random()*0.2) * (1+(penalty_index*random.random()*0.2)),
-                        'source_cx': vidset["x"]/2 + crop*2,
-                        'source_cy': vidset["y"]/2 + crop*2,
-                        'file': os.path.dirname(__file__) +"/penalty_img/" + penalty_img["file"],
+                        'logo_scale': (penalty["source"]["scale"] * (0.9 + random.random() * 0.2) * (
+                                    1 + (penalty["intensity"] * random.random() * 0.2))) / (
+                                                  penalty["multiplier"] * 0.5 + 0.5),
+                        'source_cx': vidset["x"] / 2 + crop_x * 2,
+                        'source_cy': vidset["y"] / 2 + crop_y * 2,
+                        'file': os.path.dirname(__file__) + "/penalty_img/" + penalty["source"]["file"],
                         'source_id': 'image_source',
-                        'speed': max(20, 100 + random.random()*200 - penalty_index*20)}
-    siid = obs.create_input(obs_sources["penalty_screen"], penaltyname, "dvds3_source", penalty_settings, True).scene_item_id
-    pos = [[0, 0], [vidset["x"]/2, 0], [0, vidset["y"]/2], [vidset["x"]/2, vidset["y"]/2]]
+                        'speed': max(20, 100 + random.random() * 200 - penalty["intensity"] * 20) * (penalty[
+                            "multiplier"]*0.6 + 0.4)}
+    siid = obs.create_input(obs_sources["overlay_scene"], penaltyname, "dvds3_source", penalty_settings,
+                            True).scene_item_id
+    pos = [[0, 0], [vidset["x"] / 2, 0], [0, vidset["y"] / 2], [vidset["x"] / 2, vidset["y"] / 2]]
     transform = {
-        'cropBottom': crop,
-        'cropLeft': crop,
-        'cropRight': crop,
-        'cropTop': crop,
-        'positionX': pos[seat][0],
-        'positionY': pos[seat][1],
+        'cropBottom': crop_y,
+        'cropLeft': crop_x,
+        'cropRight': crop_x,
+        'cropTop': crop_y,
+        'positionX': pos[penalty["seat"]][0],
+        'positionY': pos[penalty["seat"]][1],
         'rotation': 0.0,
         'scaleX': 1.0,
         'scaleY': 1.0,
-        'sourceWidth': vidset["x"]/2 + crop*2,
-        'sourceHeight': vidset["y"]/2 + crop*2,
-        'width': vidset["x"]/2 + crop*2,
-        'height': vidset["y"]/2 + crop*2
+        'sourceWidth': vidset["x"] / 2 + crop_x * 2,
+        'sourceHeight': vidset["y"] / 2 + crop_y * 2,
+        'width': vidset["x"] / 2 + crop_x * 2,
+        'height': vidset["y"] / 2 + crop_y * 2
     }
-    obs.set_scene_item_transform(obs_sources["penalty_screen"], siid, transform)
+    obs.set_scene_item_transform(obs_sources["overlay_scene"], siid, transform)
 
 
 def v_print(v, pstr):

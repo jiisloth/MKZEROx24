@@ -1,0 +1,163 @@
+@font-face {
+    font-family: "cybersloth";
+    src: url(../CyberSloth.ttf) format("truetype");
+}
+
+body {
+    color: #c24e4e;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    font-size: 32px;
+    overflow: hidden;
+    font-family: "cybersloth", sans-serif, Tahoma;
+}
+
+#screen {
+    width: 100%;
+    height: 50%;
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    animation: fade forwards 0.5s;
+    animation-delay: 8s;
+}
+
+.rollholder {
+    overflow: hidden;
+    width: 228px;
+    margin: -2500px 20px;
+    height: 100%;
+    animation: drop 0.5s forwards;
+
+}
+
+.rolline {
+    position: absolute;
+    height: 50%;
+    width: 278px;
+    margin-left: -25px;
+    border-bottom: red solid 3px;
+    z-index: 100;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 5%, rgba(0, 0, 0, 0.4) 20%, rgba(0, 0, 0, 0.4) 80%, black 95%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, black 5%, rgba(0, 0, 0, 0.4) 20%, rgba(0, 0, 0, 0.4) 80%, black 95%, transparent 100%);
+    animation: dropline 0.9s forwards;
+}
+
+.rollfade {
+    overflow: hidden;
+    height: 100%;
+    -webkit-mask-image: linear-gradient(rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 2%, black 40%, black 60%, rgba(0, 0, 0, 0.4) 98%, rgba(0, 0, 0, 0) 100%);
+    mask-image: linear-gradient(rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.4) 2%, black 40%, black 60%, rgba(0, 0, 0, 0.4) 98%, rgba(0, 0, 0, 0) 100%);
+}
+
+.roll {
+    border: 2px black solid;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-align: center;
+    padding: 25vh 10px;
+    text-shadow: -2px -2px black, 2px 2px black, 2px -2px black, -2px 2px black;
+    margin-top: -15000px;
+}
+
+
+
+.roll > div {
+    margin-top: 10px;
+    border: 2px black solid;
+    height: 150px;
+    width: 200px;
+    overflow: hidden;
+    background-size: contain;
+}
+
+.chosen {
+    animation: blink infinite 1s;
+}
+
+.roll0 {
+    background: #00b400 linear-gradient(rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.21) 20%, rgba(255, 255, 255, 0.2) 30%, rgba(0, 0, 0, 0.0) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 1) 100%);
+}
+
+.roll1 {
+    background: yellow linear-gradient(rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.21) 20%, rgba(255, 255, 255, 0.2) 30%, rgba(0, 0, 0, 0.0) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 1) 100%);
+}
+
+.rollh1 {
+    animation-delay: 0.2s;
+}
+
+.rollh1 .rolline {
+    animation-delay: 0.2s;
+}
+
+.roll2 {
+    background: red linear-gradient(rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.21) 20%, rgba(255, 255, 255, 0.2) 30%, rgba(0, 0, 0, 0.0) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 1) 100%);
+    animation-delay: 0.4s;
+}
+
+.rollh2 {
+    animation-delay: 0.4s;
+}
+
+.rollh2 .rolline {
+    animation-delay: 0.4s;
+}
+
+.roll0 .chosen {
+    animation-delay: 3.5s;
+}
+
+.roll1 .chosen {
+    animation-delay: 4.5s;
+}
+
+.roll2 .chosen {
+    animation-delay: 5.5s;
+}
+@keyframes drop {
+    from {
+        margin-top: -1800px;
+    }
+    to {
+        margin-top: 0;
+    }
+}
+
+@keyframes dropline {
+    from {
+        height: 100%;
+    }
+    to {
+        height: 50%;
+    }
+}
+
+@keyframes blink {
+    0% {
+        border-color: black;
+    }
+    49% {
+        border-color: black;
+    }
+    50% {
+        border-color: #ffffff;
+    }
+    100% {
+        border-color: #ffffff;
+    }
+
+}
+
+@keyframes fade {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}

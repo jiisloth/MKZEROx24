@@ -55,7 +55,7 @@ float4 PSColorMaskRGBA(VertDataOut v_in) : TARGET
 {
 	float Tolerance = opacity * 0.01;
 	float4 rgba = image.Sample(textureSampler, v_in.uv);
-	float4 targetRGB = (image.Sample(textureSampler, vec2(testpoint_x-testpoint_radius, testpoint_y-testpoint_radius)) + image.Sample(textureSampler, vec2(testpoint_x-testpoint_radius, testpoint_y+testpoint_radius)) + image.Sample(textureSampler, vec2(testpoint_x+testpoint_radius, testpoint_y+testpoint_radius)) +image.Sample(textureSampler, vec2(testpoint_x-testpoint_radius, testpoint_y+testpoint_radius)))*0.25;
+	float4 targetRGB = (image.Sample(textureSampler, float2(testpoint_x-testpoint_radius, testpoint_y-testpoint_radius)) + image.Sample(textureSampler, float2(testpoint_x-testpoint_radius, testpoint_y+testpoint_radius)) + image.Sample(textureSampler, float2(testpoint_x+testpoint_radius, testpoint_y+testpoint_radius)) +image.Sample(textureSampler, float2(testpoint_x-testpoint_radius, testpoint_y+testpoint_radius)))*0.25;
 	if (invert){
 		targetRGB.rgb = 1.0 - targetRGB.rgb;
 	}
