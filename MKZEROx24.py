@@ -66,6 +66,7 @@ obs_sources = {
 
 players = []
 states = []
+weapon_uses = []
 
 settings = {
     "seed": 0,
@@ -80,7 +81,8 @@ settings = {
     "shader-random": 0.0,
     "shader-max-range": 0.0,
     "penalty_img": [],
-    "runnin_id": 0
+    "runnin_id": 0,
+    "shader-cut-off": 0.8
 }
 thread_id = 0
 
@@ -125,6 +127,7 @@ screens = [
 
 def main():
     global states
+    global weapon_uses
     while True:
         message = json.loads(scoreboard.recv())
         if message["type"] == "error":
@@ -149,6 +152,8 @@ def main():
             reset_states()
             if reset:
                 update_shaders()
+
+            scoreboard.send(json.dumps({'type': 'get_weapon_usage'}))
         if message["type"] == "reset_state":
             v_print(2, f'Host reconnected.')
             scoreboard.send(json.dumps({'type': 'get_all_states'}))
@@ -162,6 +167,16 @@ def main():
                     scoreboard.send(json.dumps({'type': 'get_all_states'}))
                 elif ret >= 0:
                     update_shaders()
+        if message["type"] == "weapon_use":
+            v_print(2, f'Got another weapon use.')
+            v_print(4, f'{message["weapon_use"]}')
+            use_weapon(message["weapon_use"],states[-1])
+            weapon_uses.append(message["weapon_use"])
+        if message["type"] == "weapon_usage":
+            v_print(2, f'Got all weapon use.')
+            v_print(4, f'{message["weapon_usage"]}')
+            weapon_uses = message["weapon_usage"]
+
     v_print(-1, "Websocket closed.")
 
 
@@ -425,10 +440,10 @@ def check_states(state, last_state):
     return winner
 
 
-def update_shaders():
+def update_shaders(dont_hide=False):
     global thread_id
     thread_id += 1
-    if not settings["norolling"]:
+    if not settings["norolling"] or dont_hide:
         obs.set_scene_item_enabled(obs_sources["main"],
                                    obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id,
                                    True)
@@ -451,15 +466,27 @@ def update_shaders():
     for p in range(len(players)):
         if state["line"][p] < settings["controllers"]:
             game_screen = obs_sources["game_screen"].replace("#", str(state["line"][p] + 1))
-            game_sources[game_screen] = {"wins": None, "score": None, "lead": None, "fire": None, "penalties": []}
+            game_sources[game_screen] = {"wins": None, "score": None, "lead": None, "crap": None, "fire": None, "penalties": []}
             players[p]["shaders"] = []
+            pscore = players[p]["score"]
+            add_crap = False
+            penalties = state["spes"][p].count("-")
+            for wu in weapon_uses:
+                if wu["target"] == p:
+                    if wu["weapon"] == 0:
+                        penalties += 1
+                    if wu["weapon"] == 1 and round(time.time() * 1000) < wu["end_time"]:
+                        if add_crap:
+                            pscore += 2
+                        add_crap = True
+
             if state["wins"][p] > 0:
                 shader = get_shader(p, state["wins"][p], settings["shader-random"], settings["shader-max-range"])
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["wins"] = shader
 
-            if players[p]["score"] >= 1:
-                shader = get_shader(p, players[p]["score"], settings["shader-random"] * 2,
+            if pscore >= 1:
+                shader = get_shader(p, pscore, settings["shader-random"] * 2,
                                     settings["shader-max-range"] * 2)
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["score"] = shader
@@ -468,11 +495,15 @@ def update_shaders():
                 shader = get_shader(p, min(5 + windif * 5, settings["rounds"]), 0, settings["rounds"] / 3)
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["lead"] = shader
+            if add_crap:
+                shader = get_shader(p, settings["rounds"], 0, settings["rounds"] / 7)
+                players[p]["shaders"].append(shader["group"])
+                game_sources[game_screen]["crap"] = shader
+
 
             fire = min(state["fire"][p], len(fireshaders))
             if fire > 0:
                 game_sources[game_screen]["fire"] = fireshaders[fire]
-            penalties = state["spes"][p].count("-")
             for s in range(penalties):
                 count = math.ceil(pow(random.random(), 5) * 6 + 0.001)
                 for pp in range(count):
@@ -480,10 +511,10 @@ def update_shaders():
                     game_sources[game_screen]["penalties"].append(
                         {"source": penalty_source, "seat": state["line"][p], "intensity": s, "multiplier": count})
     if settings["norolling"]:
-        set_shaders(game_sources)
+        set_shaders(game_sources, thread_id, dont_hide)
     else:
         set_rollers(game_sources)
-        Thread(target=set_shaders, args=[game_sources, thread_id], daemon=True).start()
+        Thread(target=set_shaders, args=[game_sources, thread_id, dont_hide], daemon=True).start()
 
 
 def set_rollers(game_sources):
@@ -491,12 +522,12 @@ def set_rollers(game_sources):
     for c in range(settings["controllers"]):
         source = obs_sources["game_screen"].replace("#", str(c + 1))
         atributes = ""
-        for k in ["wins", "score", "lead"]:
+        for k in ["wins", "score", "lead", "crap"]:
             if game_sources[source][k]:
                 atributes += str(shaders.index(game_sources[source][k]))
             else:
                 atributes += "-1"
-            if k != "lead":
+            if k != "crap":
                 atributes += "&"
         browser_settings = {
             'url': "file://" + os.path.dirname(__file__) + "/shader_rolls/index.html?"+atributes,
@@ -511,16 +542,12 @@ def set_rollers(game_sources):
         obs.set_scene_item_transform(obs_sources["overlay_scene"], siid.scene_item_id, browser_transform)
 
 
-def set_shaders(game_sources, t_id):
+def set_shaders(game_sources, t_id, dont_hide):
     if not settings["norolling"]:
         time.sleep(7.5)
-        obs.set_scene_item_enabled(obs_sources["main"],
-                                   obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id,
-                                   False)
-        time.sleep(0.5)
-    if t_id != thread_id:
-        v_print(2, "Thread grew too old. (Newer state available) Terminating.")
-        return
+        if t_id != thread_id:
+            v_print(2, "Thread grew too old. (Newer state available) Terminating.")
+            return
 
     v_print(2, "Setting following effects for players:")
     to_print = {}
@@ -541,6 +568,10 @@ def set_shaders(game_sources, t_id):
     for i in range(len(game_sources.keys())):
         if to_print[i + 1] != "":
             v_print(2, str(i + 1) + ": " + to_print[i + 1])
+    if not settings["norolling"]:
+        obs.set_scene_item_enabled(obs_sources["main"],
+                                   obs.get_scene_item_id(obs_sources["main"], obs_sources["game_source"]).scene_item_id,
+                                   False)
     return
 
 
@@ -577,6 +608,7 @@ def get_shader(player, score, fir, mid):
 
 
 def read_shaders(shaderjson):
+    shader_multiplier = 1/settings["shader-cut-off"]
     with open(shaderjson) as f:
         json_shaders = json.loads(f.read())
         for shader in json_shaders:
@@ -585,6 +617,8 @@ def read_shaders(shaderjson):
                 shader["name"] = shader["filename"].split(".")[0]
                 shader["display_name"] = " ".join(shader["filename"].split(".")[0].split("_")).title()
                 shader["file_path"] = path
+                shader["intensity_max"] *= shader_multiplier
+                shader["intensity_min"] *= shader_multiplier
                 if shader["filename"].split(".")[1] == "effect":
                     shader["is_effect"] = True
                 else:
@@ -704,6 +738,28 @@ def v_print(v, pstr):
         else:
             print(pstr)
 
+def use_weapon(use, state):
+    global players
+    global weapon_uses
+    if use["weapon"] == 0:  # SEND FRIENDS
+        if state["line"][use["target"]] < settings["controllers"]:
+            penalties = state["spes"][use["target"]].count("-")
+            for wu in weapon_uses:
+                if wu["weapon"] == 0 and wu["target"] == use["target"]:
+                    penalties += 1
+            count = math.ceil(pow(random.random(), 5) * 6 + 0.001)
+            penalty_source = settings["penalty_img"][random.randint(0, len(settings["penalty_img"]) - 1)]
+            add_penalty_dvd({"source": penalty_source, "seat": state["line"][use["target"]], "intensity": penalties, "multiplier": count})
+    if use["weapon"] == 1:  # SEND SHIT
+        if state["line"][use["target"]] < settings["controllers"]:
+            shader = get_shader(use["target"], settings["rounds"], 1, settings["rounds"] / 7)
+            game_screen = obs_sources["game_screen"].replace("#", str(state["line"][use["target"]] + 1))
+            create_shader(game_screen, shader)
+    if use["weapon"] == 2:  # BAN PLAYER
+        pass
+    if use["weapon"] == 3:  # REROLL
+        update_shaders(True)
+
 
 if __name__ == "__main__":
     if not init_conf():
@@ -713,3 +769,4 @@ if __name__ == "__main__":
     if not settings["gamecode"]:
         quit()
     main()
+
