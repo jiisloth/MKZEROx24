@@ -108,6 +108,20 @@ body {
     animation-delay: 0.4s;
 }
 
+.roll3 {
+    background: #590000 linear-gradient(rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.21) 20%, rgba(255, 255, 255, 0.2) 30%, rgba(0, 0, 0, 0.0) 40%, rgba(0, 0, 0, 0) 60%, rgba(0, 0, 0, 1) 100%);
+    animation-delay: 0.6s;
+}
+
+.rollh3 {
+    animation-delay: 0.6s;
+}
+
+.rollh3 .rolline {
+    animation-delay: 0.6s;
+}
+
+
 .roll0 .chosen {
     animation-delay: 3.5s;
 }
@@ -118,6 +132,9 @@ body {
 
 .roll2 .chosen {
     animation-delay: 5.5s;
+}
+.roll3 .chosen {
+    animation-delay: 6.5s;
 }
 @keyframes drop {
     from {

@@ -462,24 +462,27 @@ def update_shaders(dont_hide=False):
     wins = state["wins"][:]
     wins.sort()
     windif = wins[-1] - wins[-2]
-
+    rounds_played = 0
+    for w in wins:
+        rounds_played += w
     for p in range(len(players)):
         if state["line"][p] < settings["controllers"]:
             game_screen = obs_sources["game_screen"].replace("#", str(state["line"][p] + 1))
             game_sources[game_screen] = {"wins": None, "score": None, "lead": None, "crap": None, "fire": None, "penalties": []}
             players[p]["shaders"] = []
             pscore = players[p]["score"]
-            add_crap = False
+            crapscore = 0
             penalties = state["spes"][p].count("-")
             for wu in weapon_uses:
                 if wu["target"] == p:
                     if wu["weapon"] == 0:
                         penalties += 1
-                    if wu["weapon"] == 1 and round(time.time() * 1000) < wu["end_time"]:
-                        if add_crap:
-                            pscore += 2
-                        add_crap = True
-
+                    if wu["weapon"] == 1:
+                        rdif = wu["round_of_use"] - rounds_played + settings["rounds"]
+                        if rdif > 0:
+                            crapscore += rdif
+            if crapscore > settings["rounds"]:
+                pscore += (crapscore/settings["rounds"] - 1)*2
             if state["wins"][p] > 0:
                 shader = get_shader(p, state["wins"][p], settings["shader-random"], settings["shader-max-range"])
                 players[p]["shaders"].append(shader["group"])
@@ -495,8 +498,8 @@ def update_shaders(dont_hide=False):
                 shader = get_shader(p, min(5 + windif * 5, settings["rounds"]), 0, settings["rounds"] / 3)
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["lead"] = shader
-            if add_crap:
-                shader = get_shader(p, settings["rounds"], 0, settings["rounds"] / 7)
+            if crapscore > 0:
+                shader = get_shader(p, crapscore, 0, settings["rounds"] / 7)
                 players[p]["shaders"].append(shader["group"])
                 game_sources[game_screen]["crap"] = shader
 
@@ -737,6 +740,7 @@ def v_print(v, pstr):
             print(pstr, file=sys.stderr)
         else:
             print(pstr)
+
 
 def use_weapon(use, state):
     global players
